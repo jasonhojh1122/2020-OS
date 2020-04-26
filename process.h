@@ -70,11 +70,9 @@ int startJob(Job job) {
 	int pid = fork();
 
 	if (pid < 0) {
-		perror("fork");
-		return -1;
+		exit(1);
 	}
-
-	if (pid == 0) {
+	else if (pid == 0) {
 
         #ifdef DEBUG
         fprintf(stderr, "%s in child process.\n", job.name);
@@ -83,10 +81,10 @@ int startJob(Job job) {
         struct timespec startTime = {0, 0};
         struct timespec endTime = {0, 0};
 
-		clock_gettime(CLOCK_MONOTONIC, &startTime);
+		clock_gettime(CLOCK_REALTIME, &startTime);
 		for (int i = 0; i < job.remain; i++)
 			unitTime();
-		clock_gettime(CLOCK_MONOTONIC, &endTime);
+		clock_gettime(CLOCK_REALTIME, &endTime);
 
         long pid = (long)getpid();
 
