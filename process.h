@@ -81,10 +81,10 @@ int startJob(Job job) {
         struct timespec startTime = {0, 0};
         struct timespec endTime = {0, 0};
 
-		clock_gettime(CLOCK_REALTIME, &startTime);
+		clock_gettime(CLOCK_MONOTONIC, &startTime);
 		for (int i = 0; i < job.remain; i++)
 			unitTime();
-		clock_gettime(CLOCK_REALTIME, &endTime);
+		clock_gettime(CLOCK_MONOTONIC, &endTime);
 
         long pid = (long)getpid();
 
