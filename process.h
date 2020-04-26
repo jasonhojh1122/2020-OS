@@ -70,11 +70,9 @@ int startJob(Job job) {
 	int pid = fork();
 
 	if (pid < 0) {
-		perror("fork");
-		return -1;
+		exit(1);
 	}
-
-	if (pid == 0) {
+	else if (pid == 0) {
 
         #ifdef DEBUG
         fprintf(stderr, "%s in child process.\n", job.name);
