@@ -31,10 +31,7 @@ typedef enum policy {
 	PSJF
 } Policy;
 
-void unitTime() {
-	volatile unsigned long i;
-	for (i = 0; i < 1000000UL; i++);
-}
+void unitTime() {volatile unsigned long i; for (i = 0; i < 1000000UL; i++);}
 
 void changeCPU(int pid, int core) {
 	cpu_set_t mask;
@@ -85,19 +82,22 @@ int startJob(Job job) {
         
         struct timespec startTime = {0, 0};
         struct timespec endTime = {0, 0};
+
 		clock_gettime(CLOCK_MONOTONIC, &startTime);
-		for (int i = 0; i < job.remain; i++) {
+		for (int i = 0; i < job.remain; i++)
 			unitTime();
-		}
 		clock_gettime(CLOCK_MONOTONIC, &endTime);
+
         long pid = (long)getpid();
+
 		syscall(PRINTK, pid, startTime.tv_sec, startTime.tv_nsec,
                             endTime.tv_sec, endTime.tv_nsec);
 		exit(0);
 	}
-	
-	changeCPU(pid, CHILD_CPU);
-	return pid;
+	else {
+		changeCPU(pid, CHILD_CPU);
+		return pid;
+	}
 }
 
 #endif

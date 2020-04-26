@@ -7,7 +7,7 @@
 
 static int lastTime;
 static int curTime;
-static int running;
+static int runningID;
 static int finishedNum;
 
 int cmp(const void* a, const void* b) {
@@ -26,9 +26,9 @@ int cmpSJF(const void* a, const void* b) {
 int selectFIFO(Job* jobs, int jobNum) {
 	int next = -1;
 	for (int i = 0; i < jobNum; ++i) {
-		if (!jobs[i].isReady || jobs[i].remain == 0)
-			continue;
-		else if (next == -1 || jobs[i].ready < jobs[next].ready) {
+		if (!jobs[i].isReady) break;
+		else if (jobs[i].remain == 0) continue;
+		else {
 			next = i;
 			break;
 		}
@@ -38,7 +38,7 @@ int selectFIFO(Job* jobs, int jobNum) {
 
 int selectRR(Job* jobs, int jobNum) {
 	int next = -1;
-	if (running == -1) {
+	if (runningID == -1) {
 		for (int i = 0; i < jobNum; ++i) {
 			if (jobs[i].isReady && jobs[i].remain > 0){
 				next = i;
@@ -46,13 +46,13 @@ int selectRR(Job* jobs, int jobNum) {
 			}
 		}
 	}
-	else if ((curTime - lastTime) % 500 == 0)  {
-		next = (running + 1) % jobNum;
+	else if ((curTime - lastTime) % 500 == 0) {
+		next = (runningID + 1) % jobNum;
 		while (!jobs[next].isReady || jobs[next].remain == 0)
 			next = (next + 1) % jobNum;
 	}
 	else
-		next = running;
+		next = runningID;
 	return next;
 }
 
@@ -69,8 +69,8 @@ int selectSJF(Job* jobs, int jobNum) {
 
 int selectNext(Job* jobs, int jobNum, int policy) {
 
-	if (running != -1 && (policy == SJF || policy == FIFO))
-		return running;
+	if (runningID != -1 && (policy == SJF || policy == FIFO))
+		return runningID;
 
 	int next;
 	switch (policy) {
@@ -98,18 +98,19 @@ void init(Job *jobs, int jobNum, Policy policy) {
 	continueJob(getpid(), policy);
 	
 	curTime = 0;
-	running = -1;
+	lastTime = 0;
+	runningID = -1;
 	finishedNum = 0;
 }
 
 int jobsAreDone(Job *jobs, int jobNum) {
-	if (running != -1 && jobs[running].remain == 0) {
+	if (runningID != -1 && jobs[runningID].remain == 0) {
 		#ifdef DEBUG
-		fprintf(stderr, "%s finished at time %d.\n", jobs[running].name, curTime);
+		fprintf(stderr, "%s finished at time %d.\n", jobs[runningID].name, curTime);
 		#endif
 
-		waitpid(jobs[running].pid, NULL, 0);
-		running = -1;
+		waitpid(jobs[runningID].pid, NULL, 0);
+		runningID = -1;
 		finishedNum++;
 
 		if (finishedNum == jobNum) return 1;
@@ -130,18 +131,18 @@ void checkJobsArrival(Job* jobs, int jobNum) {
 
 void scheduleNext(Job* jobs, int jobNum, Policy policy) {
 	int next = selectNext(jobs, jobNum, policy);
-	if (next != -1 && running != next) {
+	if (next != -1 && runningID != next) {
 		if (jobs[next].pid == -1){
 			jobs[next].pid = startJob(jobs[next]);
 			blockJob(jobs[next].pid, policy);	
 			#ifdef DEBUG
-			fprintf(stderr, "%s ran at time %d.\n", jobs[next].name, curTime);
+			fprintf(stderr, "%s forked at time %d.\n", jobs[next].name, curTime);
 			#endif
 		}
 		continueJob(jobs[next].pid, policy);
-		if (running != -1)
-			blockJob(jobs[running].pid, policy);
-		running = next;
+		if (runningID != -1)
+			blockJob(jobs[runningID].pid, policy);
+		runningID = next;
 		lastTime = curTime;
 	}
 }
@@ -157,8 +158,8 @@ int scheduling(Job *jobs, int jobNum, Policy policy) {
 		scheduleNext(jobs, jobNum, policy);
 
 		unitTime();
-		if (running != -1)
-			jobs[running].remain--;
+		if (runningID != -1)
+			jobs[runningID].remain--;
 
 		curTime++;
 	}

@@ -13,7 +13,6 @@ int main() {
 	Job *jobs;
 
 	scanf("%s%d", policyStr, &jobNum);
-	
 	jobs = (Job*)malloc(jobNum * sizeof(Job));
 
 	for (int i = 0; i < jobNum; ++i) {
