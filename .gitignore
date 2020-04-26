@@ -2,4 +2,5 @@ bin/
 test/
 OS_PJ1_Test/
 .vscode/
+*.docx
 entry
