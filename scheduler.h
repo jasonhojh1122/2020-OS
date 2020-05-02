@@ -40,16 +40,28 @@ int selectRR(Job* jobs, int jobNum) {
 	int next = -1;
 	if (runningID == -1) {
 		for (int i = 0; i < jobNum; ++i) {
-			if (jobs[i].isReady && jobs[i].remain > 0){
+			if (jobs[i].remain <= 0 || !jobs[i].isReady) continue;
+			if (next == -1 || (jobs[i].ready <= jobs[next].ready)) {
 				next = i;
 				break;
 			}
 		}
 	}
 	else if ((curTime - lastTime) % 500 == 0) {
+		jobs[runningID].ready = curTime;
+		next = runningID;
+		for (int i = 0; i < jobNum; ++i) {
+			if (jobs[i].remain <= 0 || !jobs[i].isReady \
+					|| i == runningID) continue;
+			if (jobs[i].ready <= jobs[next].ready) {
+				next = i;
+			}
+		}
+		/*
 		next = (runningID + 1) % jobNum;
 		while (!jobs[next].isReady || jobs[next].remain == 0)
 			next = (next + 1) % jobNum;
+		*/
 	}
 	else
 		next = runningID;
